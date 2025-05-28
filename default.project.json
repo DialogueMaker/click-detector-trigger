@@ -1,5 +1,5 @@
 {
-  "name": "click-detector-trigger",
+  "name": "ClickDetectorTrigger",
   "tree": {
     "$path": "src"
   }
