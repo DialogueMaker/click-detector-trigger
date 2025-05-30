@@ -7,28 +7,28 @@
 local CollectionService = game:GetService("CollectionService");
 
 local packages = script.Parent.roblox_packages;
-local IDialogueClient = require(packages.dialogue_client_types);
-local IDialogueServer = require(packages.dialogue_server_types);
+local IClient = require(packages.client_types);
+local IConversation = require(packages.conversation_types);
 
-type DialogueClient = IDialogueClient.DialogueClient;
-type DialogueServer = IDialogueServer.DialogueServer;
+type Client = IClient.Client;
+type Conversation = IConversation.Conversation;
 
-return function(dialogueClient: DialogueClient)
+return function(client: Client)
 
-  for _, dialogueServerModuleScript in CollectionService:GetTagged("DialogueMaker_DialogueServer") do
+  for _, conversationModuleScript in CollectionService:GetTagged("DialogueMaker_Conversation") do
 
     local didInitialize, errorMessage = pcall(function()
 
       -- We're using pcall because require can throw an error if the module is invalid.
-      local dialogueServer = require(dialogueServerModuleScript) :: DialogueServer;
-      local dialogueServerSettings = dialogueServer:getSettings();
-      local clickDetector = dialogueServerSettings.clickDetector.instance;
-      if dialogueServerSettings.clickDetector.shouldAutoCreate then
+      local conversation = require(conversationModuleScript) :: Conversation;
+      local conversationSettings = conversation:getSettings();
+      local clickDetector = conversationSettings.clickDetector.instance;
+      if conversationSettings.clickDetector.shouldAutoCreate then
 
-        assert(dialogueServerSettings.clickDetector.adornee, "ClickDetector adornee must be set if shouldAutoCreate is enabled.");
+        assert(conversationSettings.clickDetector.adornee, "ClickDetector adornee must be set if shouldAutoCreate is enabled.");
 
         local autoCreatedClickDetector = Instance.new("ClickDetector");
-        autoCreatedClickDetector.Parent = dialogueServerSettings.clickDetector.adornee;
+        autoCreatedClickDetector.Parent = conversationSettings.clickDetector.adornee;
         clickDetector = autoCreatedClickDetector;
 
       end;
@@ -36,17 +36,17 @@ return function(dialogueClient: DialogueClient)
       if clickDetector then
 
         local originalParent = clickDetector.Parent;
-        dialogueClient.DialogueServerChanged:Connect(function()
+        client.ConversationChanged:Connect(function()
 
-          clickDetector.Parent = if dialogueClient.dialogueServer == nil then originalParent else nil;
+          clickDetector.Parent = if client:getConversation() == nil then originalParent else nil;
 
         end);
 
         clickDetector.MouseClick:Connect(function()
 
-          if dialogueClient.dialogueServer == nil then
+          if client:getConversation() == nil then
 
-            dialogueClient:interact(dialogueServer);
+            client:interact(conversation);
 
           end;
 
@@ -58,7 +58,7 @@ return function(dialogueClient: DialogueClient)
 
     if not didInitialize then
 
-      local fullName = dialogueServerModuleScript:GetFullName();
+      local fullName = conversationModuleScript:GetFullName();
       warn(`[Dialogue Maker] Failed to initialize proximity prompt for {fullName}: {errorMessage}`);
 
     end;
