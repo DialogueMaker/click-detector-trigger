@@ -7,11 +7,10 @@
 local CollectionService = game:GetService("CollectionService");
 
 local packages = script.Parent.roblox_packages;
-local IClient = require(packages.client_types);
-local IConversation = require(packages.conversation_types);
+local DialogueMakerTypes = require(packages.dialogue_maker_types);
 
-type Client = IClient.Client;
-type Conversation = IConversation.Conversation;
+type Client = DialogueMakerTypes.Client;
+type Conversation = DialogueMakerTypes.Conversation;
 
 return function(client: Client)
 
@@ -36,17 +35,18 @@ return function(client: Client)
       if clickDetector then
 
         local originalParent = clickDetector.Parent;
-        client.ConversationChanged:Connect(function()
+        client.DialogueChanged:Connect(function()
 
-          clickDetector.Parent = if client:getConversation() == nil then originalParent else nil;
+          clickDetector.Parent = if client:getDialogue() == nil then originalParent else nil;
 
         end);
 
         clickDetector.MouseClick:Connect(function()
 
-          if client:getConversation() == nil then
+          if client:getDialogue() == nil then
 
-            client:interact(conversation);
+            local dialogue = conversation:findNextVerifiedDialogue();
+            client:setDialogue(dialogue);
 
           end;
 
